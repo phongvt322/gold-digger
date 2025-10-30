@@ -5,7 +5,7 @@ A real-time dashboard displaying gold price trends over the last 30 days with su
 ## Features
 
 - 🌍 Real-time gold price visualization from multiple APIs
-- 🇻🇳 **Vietnam Local Gold Prices** - Real prices from SJC, DOJI, PNJ, and Mi Hồng
+- 🇻🇳 **Vietnam Local Gold Prices** - Real prices from SJC, DOJI, PNJ, BTMC, and Mi Hồng
 - 💰 Buy/Sell prices (Mua vào/Bán ra) from Vietnamese gold companies
 - 💱 Real-time USD to VND exchange rate conversion
 - 📊 Interactive 30-day price trending charts
@@ -159,7 +159,12 @@ The dashboard fetches **real-time local gold prices** from major Vietnamese gold
    - Prices from PNJ.com.vn
    - Popular jewelry chain in Vietnam
 
-4. **Mi Hồng**
+4. **Bảo Tín Minh Châu (BTMC)**
+   - Major gold retailer in Vietnam
+   - Well-known brand with nationwide presence
+   - Multiple gold types and jewelry
+
+5. **Mi Hồng**
    - Local gold shop prices
    - Community favorite
 

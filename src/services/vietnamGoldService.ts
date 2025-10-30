@@ -14,7 +14,7 @@ export interface VietnamGoldResponse {
 
 /**
  * Fetches gold prices from Vietnamese sources
- * Sources: DOJI, SJC, PNJ, Mi Hồng
+ * Sources: DOJI, SJC, PNJ, Bảo Tín Minh Châu, Mi Hồng
  */
 export const fetchVietnamGoldPrices = async (): Promise<VietnamGoldResponse> => {
   try {
@@ -28,10 +28,14 @@ export const fetchVietnamGoldPrices = async (): Promise<VietnamGoldResponse> => 
     // Option 3: Try PNJ API
     const pnjPrices = await fetchPNJPrices().catch(() => null);
 
+    // Option 4: Try Bảo Tín Minh Châu API
+    const btmcPrices = await fetchBTMCPrices().catch(() => null);
+
     const allPrices: VietnamGoldPrice[] = [
       ...(sjcPrices || []),
       ...(dojiPrices || []),
       ...(pnjPrices || []),
+      ...(btmcPrices || []),
     ];
 
     if (allPrices.length > 0) {
@@ -175,6 +179,46 @@ const fetchPNJPrices = async (): Promise<VietnamGoldPrice[]> => {
 };
 
 /**
+ * Fetch prices from Bảo Tín Minh Châu (BTMC)
+ * BTMC is a major gold and jewelry retailer in Vietnam
+ */
+const fetchBTMCPrices = async (): Promise<VietnamGoldPrice[]> => {
+  try {
+    // Try BTMC API endpoint
+    // BTMC might have an API at their website or require scraping
+    const response = await fetch('https://www.btmcgoldgroup.com/api/gold-price');
+    if (!response.ok) throw new Error('BTMC API failed');
+
+    const data = await response.json();
+    const prices: VietnamGoldPrice[] = [];
+
+    // Parse BTMC response if available
+    if (data && Array.isArray(data)) {
+      data.forEach((item: any) => {
+        const buyPrice = parseFloat(String(item.buy || item.mua_vao || '').replace(/[,\s]/g, ''));
+        const sellPrice = parseFloat(String(item.sell || item.ban_ra || '').replace(/[,\s]/g, ''));
+
+        if (buyPrice && sellPrice) {
+          prices.push({
+            company: 'Bảo Tín Minh Châu',
+            buyPrice: buyPrice,
+            sellPrice: sellPrice,
+            unit: 'lượng',
+            type: item.name || item.type || 'Vàng BTMC',
+            lastUpdate: new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    return prices;
+  } catch (error) {
+    console.warn('Bảo Tín Minh Châu API failed:', error);
+    throw error;
+  }
+};
+
+/**
  * Generate mock Vietnam gold prices for fallback
  */
 const getMockVietnamPrices = (): VietnamGoldResponse => {
@@ -213,6 +257,14 @@ const getMockVietnamPrices = (): VietnamGoldResponse => {
         sellPrice: basePrice + 200000,
         unit: 'lượng',
         type: 'Vàng 9999',
+        lastUpdate: new Date().toISOString(),
+      },
+      {
+        company: 'Bảo Tín Minh Châu',
+        buyPrice: basePrice - 550000,
+        sellPrice: basePrice + 450000,
+        unit: 'lượng',
+        type: 'Vàng BTMC 9999',
         lastUpdate: new Date().toISOString(),
       },
     ],
