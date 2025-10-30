@@ -90,7 +90,7 @@ const fetchSJCPrices = async (): Promise<VietnamGoldPrice[]> => {
 
 /**
  * Fetch prices from DOJI
- * Parse HTML from giavang.doji.vn
+ * Parse chart data from giavang.doji.vn JavaScript
  */
 const fetchDOJIPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
@@ -107,66 +107,77 @@ const fetchDOJIPrices = async (): Promise<VietnamGoldPrice[]> => {
 
     const prices: VietnamGoldPrice[] = [];
 
-    // Parse HTML to extract gold prices from tables
-    // The HTML has tables with class "goldprice-view" containing prices
+    // Extract gold price from chart title which shows the format: "SJC (nghìn/lượng): 144,600/146,600"
+    // This gives us the current buy/sell prices in thousands per lượng
+    const chartTitleRegex = /text\s*:\s*'([^']+)\s+\(nghìn\/lượng\):\s*([0-9,]+)\/([0-9,]+)'/g;
+    let match;
 
-    // Extract main price table (first one with "Giá vàng trong nước")
+    while ((match = chartTitleRegex.exec(html)) !== null) {
+      const name = match[1].trim();
+      const buyPriceThousands = parseFloat(match[2].replace(/,/g, ''));
+      const sellPriceThousands = parseFloat(match[3].replace(/,/g, ''));
+
+      if (name && !isNaN(buyPriceThousands) && !isNaN(sellPriceThousands)) {
+        // Convert from thousands to VND: multiply by 1,000
+        const buyPrice = buyPriceThousands * 1000;
+        const sellPrice = sellPriceThousands * 1000;
+
+        prices.push({
+          company: 'DOJI',
+          buyPrice: buyPrice,
+          sellPrice: sellPrice,
+          unit: 'lượng',
+          type: name,
+          lastUpdate: new Date().toISOString(),
+        });
+
+        console.log(`DOJI: Parsed from chart - ${name}: Buy ${buyPrice}, Sell ${sellPrice}`);
+      }
+    }
+
+    // Also parse the main table for additional gold types
     const tableRegex = /<table class="goldprice-view[^"]*">[\s\S]*?<\/table>/g;
     const tables = html.match(tableRegex);
 
-    if (!tables || tables.length === 0) {
-      console.error('DOJI: No price tables found in HTML');
-      throw new Error('No DOJI price tables found');
-    }
+    if (tables && tables.length > 0) {
+      const firstTable = tables[0];
+      const rowRegex = /<tr[^>]*>[\s\S]*?<\/tr>/g;
+      const rows = firstTable.match(rowRegex);
 
-    console.log(`DOJI: Found ${tables.length} price tables`);
+      if (rows) {
+        for (const row of rows) {
+          // Skip header rows and SJC row (already parsed from chart)
+          if (row.includes('<thead>') || row.includes('<th') || row.includes('SJC') || row.includes('AVPL')) continue;
 
-    // Parse the first table (main prices)
-    const firstTable = tables[0];
+          // Extract gold type name
+          const nameMatch = row.match(/<span class="title[^"]*">([^<]+)<\/span>/);
+          const name = nameMatch ? nameMatch[1].trim() : null;
 
-    // Extract rows - looking for patterns like:
-    // <tr class="odd"><td class="first"><span class="title...">AVPL/SJC - BÁN LẺ</span>...
-    // <td class="goldprice-td goldprice-td-0"><div class="item-relative">14,460</div></td>
-    // <td class="goldprice-td goldprice-td-1"><div class="item-relative">14,660</div></td>
+          // Extract buy/sell prices (in nghìn/chỉ - thousands per chỉ)
+          const buyMatch = row.match(/<td class="goldprice-td goldprice-td-0"[^>]*><div[^>]*>([0-9,]+)<\/div><\/td>/);
+          const sellMatch = row.match(/<td class="goldprice-td goldprice-td-1"[^>]*><div[^>]*>([0-9,]+)<\/div><\/td>/);
 
-    const rowRegex = /<tr[^>]*>[\s\S]*?<\/tr>/g;
-    const rows = firstTable.match(rowRegex);
+          if (name && buyMatch && sellMatch) {
+            const buyPriceChiThousands = parseFloat(buyMatch[1].replace(/,/g, ''));
+            const sellPriceChiThousands = parseFloat(sellMatch[1].replace(/,/g, ''));
 
-    if (rows) {
-      for (const row of rows) {
-        // Skip header rows
-        if (row.includes('<thead>') || row.includes('<th')) continue;
+            // Convert from nghìn/chỉ to VND/lượng
+            // 1 lượng = 10 chỉ
+            // Price × 10 (chỉ to lượng) × 1000 (thousands to VND)
+            const buyPrice = buyPriceChiThousands * 10 * 1000;
+            const sellPrice = sellPriceChiThousands * 10 * 1000;
 
-        // Extract gold type name
-        const nameMatch = row.match(/<span class="title[^"]*">([^<]+)<\/span>/);
-        const name = nameMatch ? nameMatch[1].trim() : null;
+            prices.push({
+              company: 'DOJI',
+              buyPrice: buyPrice,
+              sellPrice: sellPrice,
+              unit: 'lượng',
+              type: name,
+              lastUpdate: new Date().toISOString(),
+            });
 
-        // Extract buy price (first goldprice-td)
-        const buyMatch = row.match(/<td class="goldprice-td goldprice-td-0"[^>]*><div[^>]*>([0-9,]+)<\/div><\/td>/);
-        // Extract sell price (second goldprice-td)
-        const sellMatch = row.match(/<td class="goldprice-td goldprice-td-1"[^>]*><div[^>]*>([0-9,]+)<\/div><\/td>/);
-
-        if (name && buyMatch && sellMatch) {
-          // Remove commas and parse
-          const buyPriceChiThousands = parseFloat(buyMatch[1].replace(/,/g, ''));
-          const sellPriceChiThousands = parseFloat(sellMatch[1].replace(/,/g, ''));
-
-          // Convert from nghìn/chỉ to VND/lượng
-          // 1 lượng = 10 chỉ
-          // Price is in thousands, so: price * 10 (chỉ to lượng) * 1000 (thousands to VND)
-          const buyPrice = buyPriceChiThousands * 10 * 1000;
-          const sellPrice = sellPriceChiThousands * 10 * 1000;
-
-          prices.push({
-            company: 'DOJI',
-            buyPrice: buyPrice,
-            sellPrice: sellPrice,
-            unit: 'lượng',
-            type: name,
-            lastUpdate: new Date().toISOString(),
-          });
-
-          console.log(`DOJI: Parsed ${name}: Buy ${buyPrice}, Sell ${sellPrice}`);
+            console.log(`DOJI: Parsed from table - ${name}: Buy ${buyPrice}, Sell ${sellPrice}`);
+          }
         }
       }
     }
