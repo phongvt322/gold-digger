@@ -5,7 +5,8 @@ A real-time dashboard displaying gold price trends over the last 30 days with su
 ## Features
 
 - 🌍 Real-time gold price visualization from multiple APIs
-- 🇻🇳 Vietnam gold price support with VND currency
+- 🇻🇳 **Vietnam Local Gold Prices** - Real prices from SJC, DOJI, PNJ, and Mi Hồng
+- 💰 Buy/Sell prices (Mua vào/Bán ra) from Vietnamese gold companies
 - 💱 Real-time USD to VND exchange rate conversion
 - 📊 Interactive 30-day price trending charts
 - 🔄 Currency toggle between USD and VND
@@ -13,6 +14,7 @@ A real-time dashboard displaying gold price trends over the last 30 days with su
 - 🎯 Multiple API fallback support for reliability
 - ⚡ Responsive design for all devices
 - 🎨 Dark/light theme support
+- 📱 Vietnamese language support for local prices
 
 ## Tech Stack
 
@@ -139,6 +141,33 @@ Real-time USD to VND conversion using:
 
 If all APIs fail or `VITE_USE_MOCK_DATA=true`, the dashboard automatically falls back to realistic mock data that simulates gold price fluctuations based on historical volatility patterns.
 
-### Vietnam Gold Prices (🇻🇳 VND)
+### Vietnam Local Gold Prices (🇻🇳)
 
-The dashboard converts international gold prices (USD per troy ounce) to Vietnamese Dong using real-time exchange rates. Note that local Vietnam gold prices (SJC, PNJ, DOJI) may vary due to local premiums and different gold standards.
+The dashboard fetches **real-time local gold prices** from major Vietnamese gold companies:
+
+1. **SJC (Saigon Jewelry Company)**
+   - Official SJC gold bar prices via SJC.com.vn API
+   - Standard for gold bars in Vietnam
+   - Prices per lượng (37.5 grams)
+
+2. **DOJI**
+   - Real-time prices from DOJI.vn API
+   - Multiple gold types available
+   - Buy and sell prices displayed
+
+3. **PNJ (Phú Nhuận Jewelry)**
+   - Prices from PNJ.com.vn
+   - Popular jewelry chain in Vietnam
+
+4. **Mi Hồng**
+   - Local gold shop prices
+   - Community favorite
+
+**Features:**
+- Shows both **Mua vào** (Buy) and **Bán ra** (Sell) prices
+- Prices displayed in VND per lượng (Vietnamese tael)
+- Automatically updates with latest prices
+- Includes Vietnamese language explanations
+- Note: 1 lượng = 37.5 grams (Vietnamese standard)
+
+The dashboard also converts international gold prices (USD per troy ounce) to Vietnamese Dong using real-time exchange rates for comparison.
