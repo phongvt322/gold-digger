@@ -2,6 +2,69 @@
   width: 100%;
 }
 
+.currency-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.toggle-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #FFD700;
+  transform: translateY(-2px);
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border-color: #FFD700;
+  color: #000;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.exchange-rate {
+  color: #888;
+  font-size: 0.9rem;
+  margin-left: auto;
+}
+
+.vietnam-info {
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.vietnam-info h3 {
+  color: #FFD700;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.vietnam-info p {
+  color: #ccc;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
 .stats-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -91,6 +154,20 @@
 }
 
 @media (max-width: 768px) {
+  .currency-toggle {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toggle-btn {
+    width: 100%;
+  }
+
+  .exchange-rate {
+    margin-left: 0;
+    text-align: center;
+  }
+
   .stats-container {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
@@ -111,9 +188,45 @@
   .chart-container h2 {
     font-size: 1.2rem;
   }
+
+  .vietnam-info {
+    padding: 1rem;
+  }
+
+  .vietnam-info h3 {
+    font-size: 1.1rem;
+  }
+
+  .vietnam-info p {
+    font-size: 0.85rem;
+  }
 }
 
 @media (prefers-color-scheme: light) {
+  .currency-toggle {
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .toggle-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #000;
+  }
+
+  .toggle-btn:hover {
+    background: rgba(217, 119, 6, 0.2);
+    border-color: #d97706;
+  }
+
+  .toggle-btn.active {
+    color: #fff;
+  }
+
+  .exchange-rate {
+    color: #666;
+  }
+
   .stat-card {
     background: rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(0, 0, 0, 0.1);
@@ -151,5 +264,18 @@
 
   .tooltip-price {
     color: #d97706;
+  }
+
+  .vietnam-info {
+    background: rgba(217, 119, 6, 0.1);
+    border-color: rgba(217, 119, 6, 0.3);
+  }
+
+  .vietnam-info h3 {
+    color: #d97706;
+  }
+
+  .vietnam-info p {
+    color: #333;
   }
 }

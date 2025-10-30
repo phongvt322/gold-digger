@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   LineChart,
   Line,
@@ -18,7 +18,10 @@ interface DashboardProps {
   data: GoldPriceResponse
 }
 
+type Currency = 'USD' | 'VND'
+
 const Dashboard = ({ data }: DashboardProps) => {
+  const [currency, setCurrency] = useState<Currency>('USD')
   const stats = useMemo(() => calculatePriceStats(data.prices), [data.prices])
 
   const formatDate = (dateStr: string) => {
@@ -26,15 +29,22 @@ const Dashboard = ({ data }: DashboardProps) => {
     return `${date.getMonth() + 1}/${date.getDate()}`
   }
 
-  const formatPrice = (value: number) => {
+  const formatPrice = (value: number, curr: Currency = currency) => {
+    if (curr === 'VND') {
+      return `${value.toLocaleString('vi-VN')} ₫`
+    }
     return `$${value.toFixed(2)}`
   }
 
   const chartData = data.prices.map(item => ({
     date: formatDate(item.date),
-    price: item.price,
+    price: currency === 'USD' ? item.price : (item.priceVND || 0),
     fullDate: item.date
   }))
+
+  const currentPrice = currency === 'USD'
+    ? data.prices[data.prices.length - 1]?.price || 0
+    : data.prices[data.prices.length - 1]?.priceVND || 0
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -50,42 +60,82 @@ const Dashboard = ({ data }: DashboardProps) => {
 
   return (
     <div className="dashboard">
+      {/* Currency Toggle */}
+      <div className="currency-toggle">
+        <button
+          className={`toggle-btn ${currency === 'USD' ? 'active' : ''}`}
+          onClick={() => setCurrency('USD')}
+        >
+          🇺🇸 USD
+        </button>
+        <button
+          className={`toggle-btn ${currency === 'VND' ? 'active' : ''}`}
+          onClick={() => setCurrency('VND')}
+        >
+          🇻🇳 VND (Vietnam)
+        </button>
+        {data.exchangeRate && (
+          <span className="exchange-rate">
+            Exchange Rate: 1 USD = {data.exchangeRate.toLocaleString('vi-VN')} ₫
+          </span>
+        )}
+      </div>
+
       <div className="stats-container">
         <div className="stat-card">
           <div className="stat-label">Current Price</div>
           <div className="stat-value current-price">
-            {formatPrice(data.prices[data.prices.length - 1]?.price || 0)}
+            {formatPrice(currentPrice)}
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-label">30-Day Change</div>
-          <div className={`stat-value ${stats.change >= 0 ? 'positive' : 'negative'}`}>
-            {stats.change >= 0 ? '+' : ''}{formatPrice(stats.change)}
-            <span className="change-percent">
-              ({stats.changePercent >= 0 ? '+' : ''}{stats.changePercent}%)
-            </span>
+          <div className={`stat-value ${
+            (currency === 'USD' ? stats.change : stats.changeVND) >= 0 ? 'positive' : 'negative'
+          }`}>
+            {currency === 'USD' ? (
+              <>
+                {stats.change >= 0 ? '+' : ''}{formatPrice(stats.change)}
+                <span className="change-percent">
+                  ({stats.changePercent >= 0 ? '+' : ''}{stats.changePercent}%)
+                </span>
+              </>
+            ) : (
+              <>
+                {stats.changeVND >= 0 ? '+' : ''}{formatPrice(stats.changeVND, 'VND')}
+                <span className="change-percent">
+                  ({stats.changePercentVND >= 0 ? '+' : ''}{stats.changePercentVND}%)
+                </span>
+              </>
+            )}
           </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-label">30-Day High</div>
-          <div className="stat-value">{formatPrice(stats.max)}</div>
+          <div className="stat-value">
+            {currency === 'USD' ? formatPrice(stats.max) : formatPrice(stats.maxVND, 'VND')}
+          </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-label">30-Day Low</div>
-          <div className="stat-value">{formatPrice(stats.min)}</div>
+          <div className="stat-value">
+            {currency === 'USD' ? formatPrice(stats.min) : formatPrice(stats.minVND, 'VND')}
+          </div>
         </div>
 
         <div className="stat-card">
           <div className="stat-label">30-Day Average</div>
-          <div className="stat-value">{formatPrice(stats.avg)}</div>
+          <div className="stat-value">
+            {currency === 'USD' ? formatPrice(stats.avg) : formatPrice(stats.avgVND, 'VND')}
+          </div>
         </div>
       </div>
 
       <div className="chart-container">
-        <h2>Price Trend (Last 30 Days)</h2>
+        <h2>Price Trend - Last 30 Days ({currency})</h2>
         <ResponsiveContainer width="100%" height={400}>
           <AreaChart
             data={chartData}
@@ -108,7 +158,7 @@ const Dashboard = ({ data }: DashboardProps) => {
               stroke="#888"
               tick={{ fontSize: 12 }}
               domain={['dataMin - 20', 'dataMax + 20']}
-              tickFormatter={formatPrice}
+              tickFormatter={(value) => formatPrice(value)}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
@@ -118,14 +168,14 @@ const Dashboard = ({ data }: DashboardProps) => {
               stroke="#FFD700"
               strokeWidth={2}
               fill="url(#colorPrice)"
-              name="Gold Price (USD)"
+              name={`Gold Price (${currency})`}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
       <div className="chart-container">
-        <h2>Detailed Price Movement</h2>
+        <h2>Detailed Price Movement ({currency})</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart
             data={chartData}
@@ -142,7 +192,7 @@ const Dashboard = ({ data }: DashboardProps) => {
               stroke="#888"
               tick={{ fontSize: 12 }}
               domain={['dataMin - 20', 'dataMax + 20']}
-              tickFormatter={formatPrice}
+              tickFormatter={(value) => formatPrice(value)}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
@@ -153,11 +203,21 @@ const Dashboard = ({ data }: DashboardProps) => {
               strokeWidth={2}
               dot={{ fill: '#FFD700', r: 3 }}
               activeDot={{ r: 6 }}
-              name="Gold Price (USD)"
+              name={`Gold Price (${currency})`}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {currency === 'VND' && (
+        <div className="vietnam-info">
+          <h3>🇻🇳 Giá Vàng tại Việt Nam</h3>
+          <p>
+            Giá vàng hiển thị theo đơn vị troy ounce (31.1035 gram) được chuyển đổi sang VNĐ.
+            Giá vàng tại Việt Nam có thể khác nhau tùy thuộc vào thương hiệu và loại vàng (SJC, PNJ, DOJI, v.v.).
+          </p>
+        </div>
+      )}
     </div>
   )
 }
