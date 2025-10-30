@@ -30,25 +30,6 @@ A real-time dashboard displaying gold price trends over the last 30 days with su
 npm install
 ```
 
-### Configuration (Optional)
-
-Create a `.env` file in the root directory for API configuration:
-
-```bash
-# Optional: Use real gold price APIs (recommended for production)
-VITE_GOLD_API_KEY=your_gold_api_key_here
-VITE_EXCHANGE_API_KEY=your_exchange_api_key_here
-
-# Set to 'true' to use mock data (useful for development/testing)
-VITE_USE_MOCK_DATA=false
-```
-
-**Free API Options:**
-- **Gold Price**: [GoldAPI.io](https://www.goldapi.io/) - 100 requests/month free
-- **Exchange Rate**: [ExchangeRate-API](https://www.exchangerate-api.com/) - 1,500 requests/month free
-
-**Without API keys**: The dashboard will automatically use free fallback APIs and realistic mock data.
-
 ### Development
 
 ```bash
@@ -67,6 +48,16 @@ npm run build
 
 This dashboard is a static React application that can be deployed to serverless platforms **without needing to run a server**!
 
+### Environment Variables (Optional)
+
+Configure these in your deployment platform dashboard for enhanced functionality:
+
+- `VITE_GOLD_API_KEY` - API key from [GoldAPI.io](https://www.goldapi.io/) (100 free requests/month)
+- `VITE_EXCHANGE_API_KEY` - API key from [ExchangeRate-API](https://www.exchangerate-api.com/) (1,500 free requests/month)
+- `VITE_USE_MOCK_DATA` - Set to `true` to use mock data instead of APIs
+
+**Note**: The dashboard works perfectly without any API keys using free fallback endpoints!
+
 ### Deploy to Vercel (Recommended)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
@@ -74,9 +65,7 @@ This dashboard is a static React application that can be deployed to serverless 
 1. Push your code to GitHub
 2. Import your repository to Vercel
 3. Vercel will auto-detect the Vite configuration
-4. (Optional) Add environment variables in Vercel dashboard:
-   - `VITE_GOLD_API_KEY` - Your gold price API key
-   - `VITE_EXCHANGE_API_KEY` - Your exchange rate API key
+4. (Optional) Add environment variables in **Vercel Dashboard → Settings → Environment Variables**
 5. Click "Deploy" - Done! ✨
 
 Or use Vercel CLI:
@@ -93,7 +82,8 @@ vercel
 2. Connect your repository to Netlify
 3. Build command: `npm run build`
 4. Publish directory: `dist`
-5. Deploy! ✨
+5. (Optional) Add environment variables in **Netlify Dashboard → Site Settings → Environment Variables**
+6. Deploy! ✨
 
 Or use Netlify CLI:
 ```bash
