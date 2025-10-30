@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 export interface GoldPriceData {
   date: string;
   price: number;
@@ -20,7 +18,9 @@ export const fetchGoldPrices = async (): Promise<GoldPriceResponse> => {
   try {
     // For demonstration, we'll generate mock data for the last 30 days
     // In production, replace this with actual API call:
+    // import axios from 'axios';
     // const response = await axios.get('https://api.example.com/gold-prices');
+    // return response.data;
 
     const mockData = generateMockGoldPrices(30);
 
