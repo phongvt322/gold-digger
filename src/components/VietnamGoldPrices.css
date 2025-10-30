@@ -1,0 +1,307 @@
+.vietnam-prices-container {
+  width: 100%;
+  margin-top: 3rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 16px;
+}
+
+.vietnam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.vietnam-header h2 {
+  font-size: 1.8rem;
+  color: #FFD700;
+  margin: 0;
+}
+
+.update-time {
+  color: #888;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+  font-size: 1.1rem;
+}
+
+.price-table-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.vietnam-price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.vietnam-price-table thead {
+  background: rgba(255, 215, 0, 0.2);
+}
+
+.vietnam-price-table th {
+  padding: 1rem;
+  text-align: left;
+  color: #FFD700;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.vietnam-price-table th.price-column {
+  text-align: right;
+}
+
+.vietnam-price-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s;
+}
+
+.vietnam-price-table tbody tr:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.vietnam-price-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.vietnam-price-table td {
+  padding: 1rem;
+  color: #fff;
+}
+
+.company-name {
+  font-weight: 600;
+}
+
+.company-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #000;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.gold-type {
+  color: #ccc;
+}
+
+.price-column {
+  text-align: right;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.buy-price {
+  color: #4ade80;
+}
+
+.sell-price {
+  color: #fbbf24;
+}
+
+.unit {
+  color: #888;
+  font-style: italic;
+}
+
+.vietnam-info-box {
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.vietnam-info-box h3 {
+  color: #FFD700;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.vietnam-info-box ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vietnam-info-box li {
+  padding: 0.5rem 0;
+  color: #ccc;
+  line-height: 1.6;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.vietnam-info-box li::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.vietnam-info-box li strong {
+  color: #FFD700;
+}
+
+.sources-info {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.sources-text {
+  color: #888;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.sources-text strong {
+  color: #FFD700;
+}
+
+@media (max-width: 768px) {
+  .vietnam-prices-container {
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+
+  .vietnam-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .vietnam-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .vietnam-price-table {
+    font-size: 0.85rem;
+  }
+
+  .vietnam-price-table th,
+  .vietnam-price-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .company-badge {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .vietnam-info-box {
+    padding: 1rem;
+  }
+
+  .vietnam-info-box h3 {
+    font-size: 1rem;
+  }
+
+  .vietnam-info-box li {
+    font-size: 0.85rem;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .vietnam-prices-container {
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(217, 119, 6, 0.05));
+    border-color: rgba(217, 119, 6, 0.3);
+  }
+
+  .vietnam-header h2 {
+    color: #d97706;
+  }
+
+  .price-table-container {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .vietnam-price-table thead {
+    background: rgba(217, 119, 6, 0.1);
+  }
+
+  .vietnam-price-table th {
+    color: #d97706;
+    border-bottom-color: rgba(217, 119, 6, 0.3);
+  }
+
+  .vietnam-price-table tbody tr {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .vietnam-price-table tbody tr:hover {
+    background: rgba(217, 119, 6, 0.05);
+  }
+
+  .vietnam-price-table td {
+    color: #000;
+  }
+
+  .gold-type {
+    color: #666;
+  }
+
+  .buy-price {
+    color: #059669;
+  }
+
+  .sell-price {
+    color: #d97706;
+  }
+
+  .unit {
+    color: #666;
+  }
+
+  .vietnam-info-box {
+    background: rgba(217, 119, 6, 0.05);
+    border-color: rgba(217, 119, 6, 0.2);
+  }
+
+  .vietnam-info-box h3 {
+    color: #d97706;
+  }
+
+  .vietnam-info-box li {
+    color: #333;
+  }
+
+  .vietnam-info-box li::before {
+    color: #d97706;
+  }
+
+  .vietnam-info-box li strong {
+    color: #d97706;
+  }
+
+  .sources-info {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .sources-text {
+    color: #666;
+  }
+
+  .sources-text strong {
+    color: #d97706;
+  }
+}

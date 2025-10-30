@@ -9,6 +9,7 @@ export interface GoldPriceResponse {
   currency: string;
   unit: string;
   exchangeRate?: number;
+  vietnamPrices?: any; // Vietnam local gold prices from DOJI, SJC, etc.
 }
 
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA === 'true';
@@ -151,29 +152,38 @@ const generateMockGoldPrices = (days: number, exchangeRate: number = 24000): Gol
  */
 export const fetchGoldPrices = async (): Promise<GoldPriceResponse> => {
   try {
+    // Import Vietnam gold service dynamically
+    const { fetchVietnamGoldPrices } = await import('./vietnamGoldService');
+
     if (USE_MOCK_DATA) {
       console.log('Using mock data (VITE_USE_MOCK_DATA=true)');
       const exchangeRate = await fetchExchangeRate().catch(() => 24000);
       const mockData = generateMockGoldPrices(30, exchangeRate);
+      const vietnamPrices = await fetchVietnamGoldPrices().catch(() => null);
 
       return {
         prices: mockData,
         currency: 'USD',
         unit: 'troy ounce',
         exchangeRate,
+        vietnamPrices,
       };
     }
 
     // Fetch real data
     console.log('Fetching real gold price data...');
-    const prices = await generateHistoricalPrices(30);
-    const exchangeRate = await fetchExchangeRate();
+    const [prices, exchangeRate, vietnamPrices] = await Promise.all([
+      generateHistoricalPrices(30),
+      fetchExchangeRate(),
+      fetchVietnamGoldPrices().catch(() => null),
+    ]);
 
     return {
       prices,
       currency: 'USD',
       unit: 'troy ounce',
       exchangeRate,
+      vietnamPrices,
     };
   } catch (error) {
     console.error('Error fetching gold prices, falling back to mock data:', error);

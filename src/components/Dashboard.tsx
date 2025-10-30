@@ -12,6 +12,7 @@ import {
   Legend
 } from 'recharts'
 import { GoldPriceResponse, calculatePriceStats } from '../services/goldPriceService'
+import VietnamGoldPrices from './VietnamGoldPrices'
 import './Dashboard.css'
 
 interface DashboardProps {
@@ -209,7 +210,11 @@ const Dashboard = ({ data }: DashboardProps) => {
         </ResponsiveContainer>
       </div>
 
-      {currency === 'VND' && (
+      {currency === 'VND' && data.vietnamPrices && (
+        <VietnamGoldPrices data={data.vietnamPrices} />
+      )}
+
+      {currency === 'VND' && !data.vietnamPrices && (
         <div className="vietnam-info">
           <h3>🇻🇳 Giá Vàng tại Việt Nam</h3>
           <p>
