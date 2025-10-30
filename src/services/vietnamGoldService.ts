@@ -90,25 +90,70 @@ const fetchSJCPrices = async (): Promise<VietnamGoldPrice[]> => {
 
 /**
  * Fetch prices from DOJI
- * Using real DOJI API endpoint
+ * Using giavang.doji.vn endpoint
  */
 const fetchDOJIPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
-    // Use environment variable if available, otherwise use default API key
     const dojiApiKey = import.meta.env.VITE_DOJI_API_KEY || '258fbd2a72ce8481089d88c678e9fe4f';
-    const response = await fetch(`https://giavang.doji.vn/api/giavang/?api_key=${dojiApiKey}`);
 
-    console.log('DOJI API Response Status:', response.status);
+    // Try multiple endpoints
+    const endpoints = [
+      `https://giavang.doji.vn/api/giavang/?api_key=${dojiApiKey}`,
+      'https://giavang.doji.vn/api/giavang/',
+      'https://giavang.doji.vn/',
+    ];
 
-    if (!response.ok) {
-      console.error('DOJI API failed with status:', response.status);
-      throw new Error(`DOJI API failed with status ${response.status}`);
+    let response: Response | null = null;
+    let data: any = null;
+
+    // Try each endpoint until one works
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`DOJI: Trying endpoint: ${endpoint}`);
+        response = await fetch(endpoint);
+        console.log(`DOJI: Response status from ${endpoint}:`, response.status);
+
+        if (response.ok) {
+          const contentType = response.headers.get('content-type');
+          console.log('DOJI: Content-Type:', contentType);
+
+          if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+            console.log('DOJI: Got JSON data');
+            break;
+          } else {
+            // Try to parse HTML
+            const html = await response.text();
+            console.log('DOJI: Got HTML, length:', html.length);
+            // Look for JSON data in script tags or data attributes
+            const jsonMatch = html.match(/<script[^>]*>.*?var\s+goldData\s*=\s*(\{[^}]+\}|\[[^\]]+\]);/s) ||
+                            html.match(/data-gold-prices='([^']+)'/);
+            if (jsonMatch) {
+              console.log('DOJI: Found embedded JSON in HTML');
+              data = JSON.parse(jsonMatch[1]);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`DOJI: Failed to fetch from ${endpoint}:`, err);
+        continue;
+      }
     }
 
-    const data = await response.json();
+    if (!response || !response.ok) {
+      console.error('DOJI: All endpoints failed');
+      throw new Error('All DOJI endpoints failed');
+    }
+
     console.log('DOJI API Full Response:', JSON.stringify(data, null, 2));
 
     const prices: VietnamGoldPrice[] = [];
+
+    if (!data) {
+      console.error('DOJI: No data received from any endpoint');
+      throw new Error('No data received from DOJI');
+    }
 
     // Helper function to extract price from various formats
     const extractPrice = (value: any): number => {
