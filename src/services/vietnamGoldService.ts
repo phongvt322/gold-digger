@@ -90,169 +90,97 @@ const fetchSJCPrices = async (): Promise<VietnamGoldPrice[]> => {
 
 /**
  * Fetch prices from DOJI
- * Using giavang.doji.vn endpoint
+ * Parse HTML from giavang.doji.vn
  */
 const fetchDOJIPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
-    const dojiApiKey = import.meta.env.VITE_DOJI_API_KEY || '258fbd2a72ce8481089d88c678e9fe4f';
+    console.log('DOJI: Fetching from https://giavang.doji.vn/');
+    const response = await fetch('https://giavang.doji.vn/');
 
-    // Try multiple endpoints
-    const endpoints = [
-      `https://giavang.doji.vn/api/giavang/?api_key=${dojiApiKey}`,
-      'https://giavang.doji.vn/api/giavang/',
-      'https://giavang.doji.vn/',
-    ];
-
-    let response: Response | null = null;
-    let data: any = null;
-
-    // Try each endpoint until one works
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`DOJI: Trying endpoint: ${endpoint}`);
-        response = await fetch(endpoint);
-        console.log(`DOJI: Response status from ${endpoint}:`, response.status);
-
-        if (response.ok) {
-          const contentType = response.headers.get('content-type');
-          console.log('DOJI: Content-Type:', contentType);
-
-          if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-            console.log('DOJI: Got JSON data');
-            break;
-          } else {
-            // Try to parse HTML
-            const html = await response.text();
-            console.log('DOJI: Got HTML, length:', html.length);
-            // Look for JSON data in script tags or data attributes
-            const jsonMatch = html.match(/<script[^>]*>.*?var\s+goldData\s*=\s*(\{[^}]+\}|\[[^\]]+\]);/s) ||
-                            html.match(/data-gold-prices='([^']+)'/);
-            if (jsonMatch) {
-              console.log('DOJI: Found embedded JSON in HTML');
-              data = JSON.parse(jsonMatch[1]);
-              break;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn(`DOJI: Failed to fetch from ${endpoint}:`, err);
-        continue;
-      }
+    if (!response.ok) {
+      console.error('DOJI: Failed with status:', response.status);
+      throw new Error(`DOJI fetch failed with status ${response.status}`);
     }
 
-    if (!response || !response.ok) {
-      console.error('DOJI: All endpoints failed');
-      throw new Error('All DOJI endpoints failed');
-    }
-
-    console.log('DOJI API Full Response:', JSON.stringify(data, null, 2));
+    const html = await response.text();
+    console.log('DOJI: Got HTML, length:', html.length);
 
     const prices: VietnamGoldPrice[] = [];
 
-    if (!data) {
-      console.error('DOJI: No data received from any endpoint');
-      throw new Error('No data received from DOJI');
+    // Parse HTML to extract gold prices from tables
+    // The HTML has tables with class "goldprice-view" containing prices
+
+    // Extract main price table (first one with "Giá vàng trong nước")
+    const tableRegex = /<table class="goldprice-view[^"]*">[\s\S]*?<\/table>/g;
+    const tables = html.match(tableRegex);
+
+    if (!tables || tables.length === 0) {
+      console.error('DOJI: No price tables found in HTML');
+      throw new Error('No DOJI price tables found');
     }
 
-    // Helper function to extract price from various formats
-    const extractPrice = (value: any): number => {
-      if (!value) return 0;
-      // Remove all non-numeric characters except dots and commas
-      const cleaned = String(value).replace(/[^\d.,]/g, '');
-      // Replace comma with dot for decimal
-      const normalized = cleaned.replace(',', '.');
-      const parsed = parseFloat(normalized);
-      return isNaN(parsed) ? 0 : parsed;
-    };
+    console.log(`DOJI: Found ${tables.length} price tables`);
 
-    // Try multiple parsing strategies
+    // Parse the first table (main prices)
+    const firstTable = tables[0];
 
-    // Strategy 1: data.DataList.Data structure
-    if (data && data.DataList && data.DataList.Data) {
-      console.log('DOJI: Trying Strategy 1 - DataList.Data');
-      const goldData = data.DataList.Data;
+    // Extract rows - looking for patterns like:
+    // <tr class="odd"><td class="first"><span class="title...">AVPL/SJC - BÁN LẺ</span>...
+    // <td class="goldprice-td goldprice-td-0"><div class="item-relative">14,460</div></td>
+    // <td class="goldprice-td goldprice-td-1"><div class="item-relative">14,660</div></td>
 
-      Object.keys(goldData).forEach((key) => {
-        const items = goldData[key];
-        if (Array.isArray(items)) {
-          items.forEach((item: any) => {
-            console.log('DOJI Item:', item);
+    const rowRegex = /<tr[^>]*>[\s\S]*?<\/tr>/g;
+    const rows = firstTable.match(rowRegex);
 
-            const buyPrice = extractPrice(item._buy || item.buy || item.Buy || item.mua_vao);
-            const sellPrice = extractPrice(item._sell || item.sell || item.Sell || item.ban_ra);
-            const name = item._name || item.name || item.Name || 'Vàng DOJI';
+    if (rows) {
+      for (const row of rows) {
+        // Skip header rows
+        if (row.includes('<thead>') || row.includes('<th')) continue;
 
-            if (buyPrice > 0 && sellPrice > 0) {
-              prices.push({
-                company: 'DOJI',
-                buyPrice: buyPrice * 1000000, // Convert to VND
-                sellPrice: sellPrice * 1000000,
-                unit: 'lượng',
-                type: name,
-                lastUpdate: new Date().toISOString(),
-              });
-              console.log('DOJI: Added price:', name, buyPrice, sellPrice);
-            }
-          });
-        }
-      });
-    }
+        // Extract gold type name
+        const nameMatch = row.match(/<span class="title[^"]*">([^<]+)<\/span>/);
+        const name = nameMatch ? nameMatch[1].trim() : null;
 
-    // Strategy 2: Direct array
-    if (prices.length === 0 && Array.isArray(data)) {
-      console.log('DOJI: Trying Strategy 2 - Direct Array');
-      data.forEach((item: any) => {
-        const buyPrice = extractPrice(item._buy || item.buy || item.Buy || item.mua_vao);
-        const sellPrice = extractPrice(item._sell || item.sell || item.Sell || item.ban_ra);
-        const name = item._name || item.name || item.Name || 'Vàng DOJI';
+        // Extract buy price (first goldprice-td)
+        const buyMatch = row.match(/<td class="goldprice-td goldprice-td-0"[^>]*><div[^>]*>([0-9,]+)<\/div><\/td>/);
+        // Extract sell price (second goldprice-td)
+        const sellMatch = row.match(/<td class="goldprice-td goldprice-td-1"[^>]*><div[^>]*>([0-9,]+)<\/div><\/td>/);
 
-        if (buyPrice > 0 && sellPrice > 0) {
+        if (name && buyMatch && sellMatch) {
+          // Remove commas and parse
+          const buyPriceChiThousands = parseFloat(buyMatch[1].replace(/,/g, ''));
+          const sellPriceChiThousands = parseFloat(sellMatch[1].replace(/,/g, ''));
+
+          // Convert from nghìn/chỉ to VND/lượng
+          // 1 lượng = 10 chỉ
+          // Price is in thousands, so: price * 10 (chỉ to lượng) * 1000 (thousands to VND)
+          const buyPrice = buyPriceChiThousands * 10 * 1000;
+          const sellPrice = sellPriceChiThousands * 10 * 1000;
+
           prices.push({
             company: 'DOJI',
-            buyPrice: buyPrice * 1000000,
-            sellPrice: sellPrice * 1000000,
+            buyPrice: buyPrice,
+            sellPrice: sellPrice,
             unit: 'lượng',
             type: name,
             lastUpdate: new Date().toISOString(),
           });
+
+          console.log(`DOJI: Parsed ${name}: Buy ${buyPrice}, Sell ${sellPrice}`);
         }
-      });
-    }
-
-    // Strategy 3: data.data or data.items
-    if (prices.length === 0 && data) {
-      console.log('DOJI: Trying Strategy 3 - data.data or data.items');
-      const items = data.data || data.items || data.prices;
-      if (Array.isArray(items)) {
-        items.forEach((item: any) => {
-          const buyPrice = extractPrice(item._buy || item.buy || item.Buy || item.mua_vao);
-          const sellPrice = extractPrice(item._sell || item.sell || item.Sell || item.ban_ra);
-          const name = item._name || item.name || item.Name || 'Vàng DOJI';
-
-          if (buyPrice > 0 && sellPrice > 0) {
-            prices.push({
-              company: 'DOJI',
-              buyPrice: buyPrice * 1000000,
-              sellPrice: sellPrice * 1000000,
-              unit: 'lượng',
-              type: name,
-              lastUpdate: new Date().toISOString(),
-            });
-          }
-        });
       }
     }
 
-    console.log(`DOJI: Successfully parsed ${prices.length} prices`);
+    console.log(`DOJI: Successfully parsed ${prices.length} prices from HTML`);
 
     if (prices.length === 0) {
-      console.warn('DOJI: Could not parse any prices from response. Please check console logs for response structure.');
+      console.warn('DOJI: Could not parse any prices from HTML');
+      throw new Error('Could not parse DOJI prices');
     }
 
     return prices;
   } catch (error) {
-    console.error('DOJI API error:', error);
+    console.error('DOJI: Error parsing HTML:', error);
     throw error;
   }
 };
