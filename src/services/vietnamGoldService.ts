@@ -210,8 +210,11 @@ const fetchDOJIPrices = async (): Promise<VietnamGoldPrice[]> => {
  */
 const fetchPNJPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
-    const response = await fetch('https://www.pnj.com.vn/blog/gia-vang/');
+    const response = await fetch('/api/pnj');
     if (!response.ok) throw new Error('PNJ API failed');
+
+    const json = await response.json();
+    if (!json.success) throw new Error('PNJ API returned error');
 
     // PNJ might require web scraping - for now return empty
     // In production, you'd need to parse their HTML or find their API
@@ -228,12 +231,14 @@ const fetchPNJPrices = async (): Promise<VietnamGoldPrice[]> => {
  */
 const fetchBTMCPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
-    // Try BTMC API endpoint
-    // BTMC might have an API at their website or require scraping
-    const response = await fetch('https://www.btmcgoldgroup.com/api/gold-price');
+    // Try BTMC API endpoint via proxy
+    const response = await fetch('/api/btmc');
     if (!response.ok) throw new Error('BTMC API failed');
 
-    const data = await response.json();
+    const json = await response.json();
+    if (!json.success) throw new Error('BTMC API returned error');
+
+    const data = json.data;
     const prices: VietnamGoldPrice[] = [];
 
     // Parse BTMC response if available

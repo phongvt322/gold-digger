@@ -1,10 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-module.exports = async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-) {
-  // Set CORS headers to allow frontend to access this API
+module.exports = async function handler(req, res) {
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -19,28 +14,27 @@ module.exports = async function handler(
   }
 
   try {
-    console.log('Fetching DOJI prices from giavang.doji.vn');
-    const response = await fetch('https://giavang.doji.vn/');
+    console.log('Fetching PNJ prices');
+    const response = await fetch('https://www.pnj.com.vn/blog/gia-vang/');
 
     if (!response.ok) {
-      throw new Error(`DOJI fetch failed with status ${response.status}`);
+      throw new Error(`PNJ fetch failed with status ${response.status}`);
     }
 
     const html = await response.text();
-    console.log('Successfully fetched DOJI HTML, length:', html.length);
+    console.log('Successfully fetched PNJ HTML, length:', html.length);
 
-    // Return the HTML so frontend can parse it
     res.status(200).json({
       success: true,
       html: html,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error fetching DOJI prices:', error);
+    console.error('Error fetching PNJ prices:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error.message || 'Unknown error',
       timestamp: new Date().toISOString(),
     });
   }
-}
+};
