@@ -15,6 +15,8 @@ A real-time dashboard displaying gold price trends over the last 30 days with su
 - ⚡ Responsive design for all devices
 - 🎨 Dark/light theme support
 - 📱 Vietnamese language support for local prices
+- 🔔 **Automatic Price Monitoring** - Monitor specific gold types and get Zalo notifications on price changes
+- ⏰ **Vercel Cron Jobs** - Automated price checks every minute
 
 ## Tech Stack
 
@@ -54,9 +56,16 @@ This dashboard is a static React application that can be deployed to serverless 
 
 Configure these in your deployment platform dashboard for enhanced functionality:
 
+#### Gold Price APIs
 - `VITE_GOLD_API_KEY` - API key from [GoldAPI.io](https://www.goldapi.io/) (100 free requests/month)
 - `VITE_EXCHANGE_API_KEY` - API key from [ExchangeRate-API](https://www.exchangerate-api.com/) (1,500 free requests/month)
 - `VITE_USE_MOCK_DATA` - Set to `true` to use mock data instead of APIs
+
+#### Zalo Notifications (for Price Monitoring)
+- `ZALO_WEBHOOK_URL` - Webhook URL for sending messages to Zalo group (recommended method)
+- `ZALO_ACCESS_TOKEN` - Zalo OA (Official Account) access token (alternative method)
+- `ZALO_GROUP_ID` - Zalo group ID to send notifications to (required with access token)
+- `CRON_SECRET` - Optional secret to secure cron endpoints
 
 **Note**: The dashboard works perfectly without any API keys using free fallback endpoints!
 
@@ -176,3 +185,119 @@ The dashboard fetches **real-time local gold prices** from major Vietnamese gold
 - Note: 1 lượng = 37.5 grams (Vietnamese standard)
 
 The dashboard also converts international gold prices (USD per troy ounce) to Vietnamese Dong using real-time exchange rates for comparison.
+
+## 🔔 Automatic Price Monitoring & Zalo Notifications
+
+The dashboard includes an **automated price monitoring system** that checks gold prices every minute and sends Zalo notifications when prices change.
+
+### Features
+
+- ⏰ Automatic price checks every 1 minute using Vercel Cron Jobs
+- 🎯 Monitors specific gold type: **"NHẪN TRÒN 9999 (HƯNG THỊNH VƯỢNG - BÁN LẺ)"**
+- 📱 Sends Zalo group messages when prices change
+- 📊 Detailed price change notifications (old vs new, increase/decrease)
+- 🔐 Secure cron endpoint with optional secret token
+
+### How It Works
+
+1. **Vercel Cron** triggers `/api/monitor-price` every minute
+2. API fetches latest DOJI prices
+3. Compares with previous price stored in memory
+4. If price changed → Sends formatted message to Zalo group
+5. Updates cached price for next comparison
+
+### Setup Instructions
+
+#### Method 1: Zalo Webhook (Recommended - Easiest)
+
+1. Create a webhook integration in your Zalo group
+2. Get the webhook URL from Zalo
+3. Add to Vercel environment variables:
+   ```
+   ZALO_WEBHOOK_URL=https://your-webhook-url
+   ```
+
+#### Method 2: Zalo Official Account API
+
+1. Register a Zalo Official Account (OA)
+2. Get your access token from [Zalo Developers](https://developers.zalo.me/)
+3. Get your group ID
+4. Add to Vercel environment variables:
+   ```
+   ZALO_ACCESS_TOKEN=your-access-token
+   ZALO_GROUP_ID=your-group-id
+   ```
+
+#### Optional: Secure Cron Endpoint
+
+Add a secret to prevent unauthorized access to the cron endpoint:
+```
+CRON_SECRET=your-random-secret-string
+```
+
+### Testing
+
+Visit `/api/test-monitor` in your deployed app to manually test the price monitoring system:
+
+```
+https://your-app.vercel.app/api/test-monitor
+```
+
+This will:
+- ✅ Show current monitoring status
+- ✅ Display current price for monitored gold type
+- ✅ Test Zalo notification (if price changed)
+- ✅ Show configuration status
+
+### Notification Format
+
+When a price change is detected, Zalo group receives:
+
+```
+🔔 THÔNG BÁO THAY ĐỔI GIÁ VÀNG
+
+📊 Loại: NHẪN TRÒN 9999 (HƯNG THỊNH VƯỢNG - BÁN LẺ)
+
+💰 Giá Mua:
+   Cũ: 14.460.000 ₫
+   Mới: 14.500.000 ₫
+   📈 Tăng: 40.000 ₫
+
+💵 Giá Bán:
+   Cũ: 14.600.000 ₫
+   Mới: 14.650.000 ₫
+   📈 Tăng: 50.000 ₫
+
+🕒 31/10/2025, 10:30:45
+
+Nguồn: DOJI - giavang.doji.vn
+```
+
+### Customizing Monitored Gold Type
+
+To monitor a different gold type, edit `/api/monitor-price.js`:
+
+```javascript
+const targetGoldType = 'YOUR GOLD TYPE HERE';
+```
+
+Available gold types can be found by visiting `/api/test-monitor`.
+
+### Limitations
+
+- **Vercel Cron**: Free tier has cron job limits (check Vercel docs)
+- **Price Storage**: Uses in-memory cache (resets on cold starts)
+- **For Production**: Consider using Vercel KV or Redis for persistent storage
+
+### Disabling Monitoring
+
+Remove or comment out the `crons` section in `vercel.json`:
+
+```json
+// "crons": [
+//   {
+//     "path": "/api/monitor-price",
+//     "schedule": "* * * * *"
+//   }
+// ]
+```
