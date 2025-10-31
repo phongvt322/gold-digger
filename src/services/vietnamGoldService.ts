@@ -59,11 +59,14 @@ export const fetchVietnamGoldPrices = async (): Promise<VietnamGoldResponse> => 
  */
 const fetchSJCPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
-    // SJC provides a public API endpoint
-    const response = await fetch('https://sjc.com.vn/xml/tygiavang.xml');
+    // Use proxy API to avoid CORS issues
+    const response = await fetch('/api/sjc');
     if (!response.ok) throw new Error('SJC API failed');
 
-    const text = await response.text();
+    const json = await response.json();
+    if (!json.success) throw new Error('SJC API returned error');
+
+    const text = json.data;
 
     // Parse XML response (simplified - you may need a proper XML parser)
     const prices: VietnamGoldPrice[] = [];
@@ -94,16 +97,22 @@ const fetchSJCPrices = async (): Promise<VietnamGoldPrice[]> => {
  */
 const fetchDOJIPrices = async (): Promise<VietnamGoldPrice[]> => {
   try {
-    console.log('DOJI: Fetching from https://giavang.doji.vn/');
-    const response = await fetch('https://giavang.doji.vn/');
+    console.log('DOJI: Fetching via API proxy');
+    const response = await fetch('/api/doji');
 
     if (!response.ok) {
-      console.error('DOJI: Failed with status:', response.status);
-      throw new Error(`DOJI fetch failed with status ${response.status}`);
+      console.error('DOJI: API failed with status:', response.status);
+      throw new Error(`DOJI API failed with status ${response.status}`);
     }
 
-    const html = await response.text();
-    console.log('DOJI: Got HTML, length:', html.length);
+    const json = await response.json();
+    if (!json.success) {
+      console.error('DOJI: API returned error:', json.error);
+      throw new Error('DOJI API returned error');
+    }
+
+    const html = json.html;
+    console.log('DOJI: Got HTML from API, length:', html.length);
 
     const prices: VietnamGoldPrice[] = [];
 
